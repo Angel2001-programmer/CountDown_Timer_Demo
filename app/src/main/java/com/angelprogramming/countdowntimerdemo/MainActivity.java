@@ -107,5 +107,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "choose a positive number", Toast.LENGTH_LONG).show();
         }
         tvTimer.setText("Time left:\n" + Integer.toString(minutes) + ":" + secondStr);
+        //plz give me strength to code
     }
 }
