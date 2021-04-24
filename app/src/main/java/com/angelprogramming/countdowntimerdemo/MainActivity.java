@@ -20,7 +20,7 @@ public class MainActivity extends AppCompatActivity {
     Button btnStart;
     MediaPlayer alarm;
     SeekBar customSeekBar;
-    CountDownTimer countDownTimer = null;
+    CountDownTimer countDownTimer = nul;
     Boolean timer = false;
 
     @Override
