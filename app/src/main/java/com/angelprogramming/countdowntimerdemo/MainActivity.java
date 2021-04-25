@@ -17,13 +17,14 @@ import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
+
     TextView tvTimer;
     Button btnStart;
     MediaPlayer alarm;
     SeekBar customSeekBar;
     CountDownTimer countDownTimer = null;
     Boolean mtimer = false;
-    long millisUntilFinished, mEndTime;
+    long millisUntilFinished;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,9 +35,39 @@ public class MainActivity extends AppCompatActivity {
         alarm = MediaPlayer.create(this, R.raw.alarm);
         customSeekBar = findViewById(R.id.seekBar);
 
-        if (savedInstanceState != null) {
-            millisUntilFinished = savedInstanceState.getLong("millisUntilFinished");
-        }
+        btnStart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mtimer == false) {
+                    btnStart.setText("Stop!");
+                    btnStart.setBackgroundResource(R.drawable.button_design_overlay);
+                    mtimer = true;
+                    alarm.stop();
+
+                    countDownTimer = new CountDownTimer(customSeekBar.getProgress() * 1000, 1000) {
+                        @Override
+                        public void onTick(long millisUntilFinished) {
+                            update((int) millisUntilFinished / 1000);
+                        }
+
+                        @Override
+                        public void onFinish() {
+                        }
+                    };
+                    countDownTimer.start();
+
+                } else {
+                    btnStart.setText("Go!");
+                    btnStart.setBackgroundResource(R.drawable.button_design);
+                    customSeekBar.setProgress(0);
+                    tvTimer.setText("0:00");
+                    alarm.start();
+                    countDownTimer.cancel();
+                    mtimer = false;
+                    alarm.start();
+                }
+            }
+        });
 
         customSeekBar.setProgress(0);
         customSeekBar.setMax(300);
@@ -45,9 +76,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(final SeekBar seekBar, final int progress, boolean fromUser) {
                 update(progress);
-                if (!fromUser) {
+                if (!fromUser)
                     return;
-                }
+
             }
 
             @Override
@@ -65,41 +96,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btnStart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mtimer != true) {
-                    mtimer = true;
-                    btnStart.setBackgroundResource(R.drawable.button_design_overlay);
-                    btnStart.setText("Stop!");
-
-                    countDownTimer = new CountDownTimer(customSeekBar.getProgress() * 1000, 1000) {
-                        @Override
-                        public void onTick(long millisUntilFinished) {
-                            update((int) millisUntilFinished / 1000);
-                        }
-
-                        @Override
-                        public void onFinish() {
-                            restart();
-                        }
-                    };
-                    countDownTimer.start();
-                } else {
-                    restart();
-                }
+        if (savedInstanceState != null) {
+            savedInstanceState.getLong("millisUntilFinished");
+            if (mtimer) {
+                countDownTimer.start();
             }
-        });
-    }
-
-    public void restart() {
-        mtimer = false;
-        tvTimer.setText("Time left: " + "0:00");
-        countDownTimer.cancel();
-        btnStart.setText("Go!");
-        btnStart.setBackgroundResource(R.drawable.button_design);
-        customSeekBar.setProgress(0);
-        alarm.start();
+        }
     }
 
     public void update(int progress) {
@@ -116,15 +118,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putLong("millisUntilFinished", millisUntilFinished);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        millisUntilFinished = savedInstanceState.getLong("millisUntilFinished");
-
+    protected void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
+        savedInstanceState.getLong("millisUntilFinished", millisUntilFinished);
+        super.onSaveInstanceState(savedInstanceState);
     }
 }
