@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
@@ -16,14 +17,16 @@ import android.widget.TextView;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
-
-
+    //https://codinginflow.com/tutorials/android/countdowntimer/part-3-run-in-background
     TextView tvTimer;
     Button btnStart;
     MediaPlayer alarm;
     SeekBar customSeekBar;
     CountDownTimer countDownTimer = null;
-    Boolean mtimer = false;
+    Boolean mtimer = true;
+
+    static final long START_TIME_IN_MILES = 600000;
+    long mEndTime;
     long millisUntilFinished;
 
     @Override
@@ -35,40 +38,6 @@ public class MainActivity extends AppCompatActivity {
         alarm = MediaPlayer.create(this, R.raw.alarm);
         customSeekBar = findViewById(R.id.seekBar);
 
-        btnStart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mtimer == false) {
-                    btnStart.setText("Stop!");
-                    btnStart.setBackgroundResource(R.drawable.button_design_overlay);
-                    mtimer = true;
-                    alarm.stop();
-
-                    countDownTimer = new CountDownTimer(customSeekBar.getProgress() * 1000, 1000) {
-                        @Override
-                        public void onTick(long millisUntilFinished) {
-                            update((int) millisUntilFinished / 1000);
-                        }
-
-                        @Override
-                        public void onFinish() {
-                        }
-                    };
-                    countDownTimer.start();
-
-                } else {
-                    btnStart.setText("Go!");
-                    btnStart.setBackgroundResource(R.drawable.button_design);
-                    customSeekBar.setProgress(0);
-                    tvTimer.setText("0:00");
-                    alarm.start();
-                    countDownTimer.cancel();
-                    mtimer = false;
-                    alarm.start();
-                }
-            }
-        });
-
         customSeekBar.setProgress(0);
         customSeekBar.setMax(300);
         customSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -78,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
                 update(progress);
                 if (!fromUser)
                     return;
-
             }
 
             @Override
@@ -95,13 +63,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
-        if (savedInstanceState != null) {
-            savedInstanceState.getLong("millisUntilFinished");
-            if (mtimer) {
-                countDownTimer.start();
-            }
-        }
     }
 
     public void update(int progress) {
@@ -117,9 +78,87 @@ public class MainActivity extends AppCompatActivity {
         tvTimer.setText("Time left: " + minutes + ":" + secondsFinal);
     }
 
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
-        savedInstanceState.getLong("millisUntilFinished", millisUntilFinished);
-        super.onSaveInstanceState(savedInstanceState);
+    public void startTimer() {
+        mEndTime = System.currentTimeMillis() + customSeekBar.getProgress();
+
+        countDownTimer = new CountDownTimer(customSeekBar.getProgress() * 1000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                update((int) millisUntilFinished / 1000);
+            }
+
+            @Override
+            public void onFinish() {
+                mtimer = false;
+                buttons();
+            }
+        }.start();
+
+        buttons();
+        mtimer = true;
+    }
+
+    public void buttons() {
+        startTimer();
+        btnStart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mtimer == true) {
+                    btnStart.setText("Stop!");
+                    btnStart.setBackgroundResource(R.drawable.button_design_overlay);
+                    alarm.stop();
+
+                } else {
+                    btnStart.setText("Go!");
+                    btnStart.setBackgroundResource(R.drawable.button_design);
+                    customSeekBar.setProgress(0);
+                    tvTimer.setText("0:00");
+                    alarm.start();
+                }
+            }
+        });
     }
 }
+
+
+//    @Override
+//    protected void onStop() {
+//        super.onStop();
+//
+//        SharedPreferences preferences = getSharedPreferences("preferences", MODE_PRIVATE);
+//        SharedPreferences.Editor editor = preferences.edit();
+//
+//        editor.putLong("millisUntilFinished", millisUntilFinished);
+//        editor.putBoolean("timerRunnning", mtimer);
+//        editor.putLong("endTime", mEndTime);
+//
+//        editor.apply();
+//
+//        if(countDownTimer != null){
+//            countDownTimer.cancel();
+//        }
+//    }
+//
+//    @Override
+//    protected void onStart() {
+//        super.onStart();
+//
+//        SharedPreferences preferences = getSharedPreferences("preferences", MODE_PRIVATE);
+//        millisUntilFinished = preferences.getLong("millisUntilFinished", START_TIME_IN_MILES);
+//        mtimer = preferences.getBoolean("timerRunnning", false);
+//
+//        buttons();
+//
+//        if(mtimer) {
+//           mEndTime = preferences.getLong("endTime", 0);
+//           millisUntilFinished = mEndTime - System.currentTimeMillis();
+//
+//           if(millisUntilFinished < 0){
+//               millisUntilFinished = 0;
+//               mtimer = false;
+//               buttons();
+//           } else {
+//               startTimer();
+//           }
+//
+//        }
