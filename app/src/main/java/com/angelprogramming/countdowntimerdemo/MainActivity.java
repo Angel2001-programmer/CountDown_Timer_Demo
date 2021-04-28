@@ -17,17 +17,13 @@ import android.widget.TextView;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
-    private static final long START_TIME_IN_MILLIS = 600000;
 
     TextView tvTimer;
     Button btnStart;
     MediaPlayer alarm;
     SeekBar customSeekBar;
     CountDownTimer countDownTimer = null;
-    Boolean mtimer;
-
-    long mEndTime;
-    long mTimeLeftInMillis = START_TIME_IN_MILLIS;
+    Boolean mtimer = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +43,27 @@ public class MainActivity extends AppCompatActivity {
                 update(progress);
                 if (!fromUser)
                     return;
-                startTimer();
+
+                countDownTimer = new CountDownTimer(customSeekBar.getProgress() * 1000, 1000) {
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        update((int) millisUntilFinished / 1000);
+                        mtimer = false;
+                        buttons();
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        btnStart.setText("Go!");
+                        btnStart.setBackgroundResource(R.drawable.button_design);
+                        customSeekBar.setProgress(0);
+                        tvTimer.setText("0:00");
+                        alarm.start();
+                        countDownTimer.cancel();
+                    }
+                };
+                mtimer = true;
+                buttons();
             }
 
             @Override
@@ -64,28 +80,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-    }
-
-    public void startTimer() {
-
-        mEndTime = System.currentTimeMillis() + mTimeLeftInMillis;
-
-        countDownTimer = new CountDownTimer(mTimeLeftInMillis, 1000) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                mTimeLeftInMillis = millisUntilFinished;
-                update((int) millisUntilFinished / 1000);
-            }
-
-            @Override
-            public void onFinish() {
-                mtimer = false;
-                buttons();
-            }
-        };
-        mtimer = true;
-        buttons();
-
     }
 
     public void update(int progress) {
@@ -105,12 +99,10 @@ public class MainActivity extends AppCompatActivity {
         btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startTimer();
 
                 if (mtimer) {
                     btnStart.setText("Stop!");
                     btnStart.setBackgroundResource(R.drawable.button_design_overlay);
-                    alarm.stop();
                     countDownTimer.start();
 
                 } else {
@@ -123,34 +115,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-    }
-
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putLong("millisLeft", mTimeLeftInMillis);
-        outState.putLong("endTime", mEndTime);
-        outState.putBoolean("timer", mtimer);
-        outState.putString("tvTimer", tvTimer.getText().toString());
-    }
-
-    @Override
-    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-
-        mTimeLeftInMillis = savedInstanceState.getLong("millisLeft");
-        mtimer = savedInstanceState.getBoolean("timer");
-        buttons();
-
-        if (!mtimer) {
-//            mEndTime = savedInstanceState.getLong("endTime");
-//            mTimeLeftInMillis = mEndTime - System.currentTimeMillis();
-//            mtimer = true;
-            startTimer();
-
-            //button does not work properly
-            //restore is not working properly please fix it
-        }
     }
 }
 
